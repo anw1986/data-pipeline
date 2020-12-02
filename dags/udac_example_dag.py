@@ -1,9 +1,12 @@
 from datetime import datetime, timedelta
 import os
 from airflow import DAG
+# from airflow.contrib.hooks.aws_hook import AwsHook
+# from airflow.hooks.postgres_hook import PostgresHook
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators import (StageToRedshiftOperator, LoadFactOperator,
-                                LoadDimensionOperator, DataQualityOperator)
+                                LoadDimensionOperator, DataQualityOperator, 
+                                PythonOperator)
 from helpers import SqlQueries
 # http://michal.karzynski.pl/blog/2017/03/19/developing-workflows-with-apache-airflow/#:~:text=When%20a%20Task%20is%20executed,definition%20files%20and%20Airflow%20plugins
 
@@ -36,10 +39,34 @@ dag = DAG('udac_example_dag',
           schedule_interval='0 * * * *'
         )
 
+dag_test=DAG('udac_example_dag',
+        default_args=default_args,
+        description='create table in redshift',
+        schedule_interval='0 * * * *'
+)
 
 start_operator = DummyOperator(task_id='Begin_execution',  dag=dag)
 
 # create all tables in the database
+# def create_table(*args,**kwargs):
+#     aws_hook=AwsHook('aws_credentials')
+#     credentials=aws_hook.get_credentials()
+#     redshift=PostgresHook('redshift')
+#     log.info('create table')
+#     query_run_table="""
+#         CREATE TABLE employee(
+#         emp_name varchar(256),
+#         emp_dept varchar(256)
+#     );
+#     """
+#     redshift.run(query_run_table)
+
+# create_table_redshift=PostgresOperato(
+#     task_id='create_table',
+#     dag=dag_test,
+#     # redshift_conn_id = "redshift",
+#     # aws_credentials_id="aws_credentials"
+# )
 
 stage_events_to_redshift = StageToRedshiftOperator(
     task_id='Stage_events',

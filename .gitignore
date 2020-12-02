@@ -1,2 +1,4 @@
 .cfg
 logs
+.cache
+.local
