@@ -20,20 +20,53 @@ default_args = {
     'email_on_rety': False
 }
 
-dag = DAG('create_table_redshift',
+dag = DAG('test_create_table_redshift',
           default_args=default_args,
           description='Load and transform data in Redshift with Airflow',
           schedule_interval='0 * * * *'
 )
 
-create_table=PostgresOperator(
+create_table_employee=PostgresOperator(
     task_id='redshift_table',
     dag=dag,
     postgres_conn_id='redshift',
+    sql='test_sql.sql'
+)
+
+dag_2 = DAG('test_car_table_redshift',
+          default_args=default_args,
+          description='Load and transform data in Redshift with Airflow',
+          schedule_interval='0 * * * *'
+)
+
+create_table_car=PostgresOperator(
+    task_id='redshift_table',
+    dag=dag_2,
+    postgres_conn_id='redshift',
     sql="""
-        CREATE TABLE IF NOT EXIST employee(
-        emp_name varchar,
-        emp_dept varchar
-    );
+        CREATE TABLE IF NOT EXISTS car(
+            car_id VARCHAR,
+            car_name VARCHAR
+        )
     """
 )
+
+dag_3=DAG(
+    'create_all_tables_redshift',
+    default_args=default_args,
+    description='Load and transform data in Redshift with Airflow',
+    schedule_interval='0 * * * *'
+)
+
+start_operator=DummyOperator(task_id='Begin_execution',dag=dag_3)
+
+create_table_all=PostgresOperator(
+    task_id='redshift_table',
+    dag=dag_3,
+    postgres_conn_id='redshift',
+    sql='sql/create_tables.sql'
+)
+
+end_operator=DummyOperator(task_id='End_execution', dag=dag_3)
+
+start_operator>>create_table_all>>end_operator
