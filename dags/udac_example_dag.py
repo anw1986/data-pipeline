@@ -47,27 +47,6 @@ dag_test=DAG('udac_example_dag',
 
 start_operator = DummyOperator(task_id='Begin_execution',  dag=dag)
 
-# create all tables in the database
-# def create_table(*args,**kwargs):
-#     aws_hook=AwsHook('aws_credentials')
-#     credentials=aws_hook.get_credentials()
-#     redshift=PostgresHook('redshift')
-#     log.info('create table')
-#     query_run_table="""
-#         CREATE TABLE employee(
-#         emp_name varchar(256),
-#         emp_dept varchar(256)
-#     );
-#     """
-#     redshift.run(query_run_table)
-
-# create_table_redshift=PostgresOperato(
-#     task_id='create_table',
-#     dag=dag_test,
-#     # redshift_conn_id = "redshift",
-#     # aws_credentials_id="aws_credentials"
-# )
-
 stage_events_to_redshift = StageToRedshiftOperator(
     task_id='Stage_events',
     dag=dag
