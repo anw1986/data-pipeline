@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta
 import os
 from airflow import DAG
-# from airflow.contrib.hooks.aws_hook import AwsHook
-# from airflow.hooks.postgres_hook import PostgresHook
+from airflow.contrib.hooks.aws_hook import AwsHook
+from airflow.hooks.postgres_hook import PostgresHook
 from airflow.operators.dummy_operator import DummyOperator
+from airflow.operators.postgres_operator import PostgresOperator
 from airflow.operators import (StageToRedshiftOperator, LoadFactOperator,
                                 LoadDimensionOperator, DataQualityOperator, 
                                 PythonOperator)
@@ -12,7 +13,7 @@ from helpers import SqlQueries
 
 # AWS_KEY = os.environ.get('AWS_KEY')
 # AWS_SECRET = os.environ.get('AWS_SECRET')
-# able to share folder inside the container - check 2
+
 
 '''
 DAG default parameters:
@@ -47,34 +48,56 @@ dag_test=DAG('udac_example_dag',
 
 start_operator = DummyOperator(task_id='Begin_execution',  dag=dag)
 
+create_table_all=PostgresOperator(
+    task_id='redshift_table',
+    dag=dag,
+    postgres_conn_id='redshift',
+    sql='sql/create_tables.sql'
+)
+
 stage_events_to_redshift = StageToRedshiftOperator(
-    task_id='Stage_events',
-    dag=dag
+    task_id='stage_songs',
+    dag=dag,
+    table='staging_songs',
+    redshift_conn_id='redshift',
+    aws_credentials_id='aws_credentials',
+    s3_bucket='udacity-dend', 
+    copy_sql=SqlQueries.copy_staging_songs,
+    s3_key='log_data/2018/11/'
 )
 
 stage_songs_to_redshift = StageToRedshiftOperator(
-    task_id='Stage_songs',
-    dag=dag
+    task_id='staging_events',
+    dag=dag,
+    redshift_conn_id='redshift',
+    aws_credentials_id='aws_credentials',
+    s3_bucket='udacity-dend',
+    copy_sql=SqlQueries.copy_staging_songs,
+    s3_key='song_data/A/'
 )
 
 load_songplays_table = LoadFactOperator(
     task_id='Load_songplays_fact_table',
-    dag=dag
+    dag=dag,
+    sql_query=SqlQueries.songplay_table_insert
 )
 
 load_user_dimension_table = LoadDimensionOperator(
     task_id='Load_user_dim_table',
-    dag=dag
+    dag=dag,
+    sql_query=SqlQueries.user_table_insert
 )
 
 load_song_dimension_table = LoadDimensionOperator(
     task_id='Load_song_dim_table',
-    dag=dag
+    dag=dag,
+    sql_query=SqlQueries.song_table_insert
 )
 
 load_artist_dimension_table = LoadDimensionOperator(
     task_id='Load_artist_dim_table',
-    dag=dag
+    dag=dag,
+    sql_query=SqlQueries.artist_table_insert
 )
 
 load_time_dimension_table = LoadDimensionOperator(
@@ -91,6 +114,6 @@ end_operator = DummyOperator(task_id='Stop_execution',  dag=dag)
 
 # Relations between tasks
 # see the bitshit operations in the documention https://airflow.apache.org/docs/stable/concepts.html?highlight=hook#additional-functionality
-start_operator>>[stage_events_to_redshift,stage_songs_to_redshift]>>load_songplays_table
+start_operator>>create_table_all>>[stage_events_to_redshift,stage_songs_to_redshift]>>load_songplays_table
 load_songplays_table>>[load_artist_dimension_table,load_song_dimension_table,load_time_dimension_table,load_user_dimension_table]>>run_quality_checks
 run_quality_checks>>end_operator

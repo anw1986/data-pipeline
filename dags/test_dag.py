@@ -74,9 +74,25 @@ load_songs_to_redshift=StageToRedshiftOperator(
     redshift_conn_id='redshift',
     aws_credentials_id='aws_credentials',
     s3_bucket='udacity-dend', 
+    copy_sql=SqlQueries.copy_staging_songs,
     s3_key='song_data/A/'
+)
+# s3://udacity-dend/log_data/2018/11/
+# log_data/2018/11/2018-11-01-events.json
+# log_data/{{year}}/{{month}}/{{yyyy-mm-dd}}-events.json
+# LOG_JSONPATH='s3://udacity-dend/log_json_path.json'
+stage_events_to_redshift=StageToRedshiftOperator(
+    task_id='staging_events',
+    dag=dag_3,
+    table='staging_events',
+    redshift_conn_id='redshift',
+    aws_credentials_id='aws_credentials',
+    s3_bucket='udacity-dend',
+    copy_sql=SqlQueries.copy_staging_events,
+    params={'log_path':'s3://udacity-dend/log_json_path.json'},
+    s3_key='log_data/{{macros.ds_format(ds,"%Y-%m-%d","%Y")}}/{{macros.ds_format(ds,"%Y-%m-%d","%m")}}/{{ds}}-events.json'
 )
 
 end_operator=DummyOperator(task_id='End_execution', dag=dag_3)
 
-start_operator>>create_table_all>>load_songs_to_redshift>>end_operator
+start_operator>>create_table_all>>[load_songs_to_redshift,stage_events_to_redshift]>>end_operator

@@ -1,5 +1,6 @@
 class SqlQueries:
     songplay_table_insert = ("""
+        INSERT INTO songplays (playid, start_time, userid, level, songid, artistid, sessionid, location, user_agent)
         SELECT
                 md5(events.sessionid || events.start_time) songplay_id,
                 events.start_time, 
@@ -15,8 +16,8 @@ class SqlQueries:
             WHERE page='NextSong') events
             LEFT JOIN staging_songs songs
             ON events.song = songs.title
-                AND events.artist = songs.artist_name
-                AND events.length = songs.duration
+            AND events.artist = songs.artist_name
+            AND events.length = songs.duration
     """)
 
     user_table_insert = ("""
@@ -26,12 +27,12 @@ class SqlQueries:
     """)
 
     song_table_insert = ("""
-        SELECT distinct song_id, title, artist_id, year, duration
+        INSERT INTO songs SELECT distinct song_id, title, artist_id, year, duration
         FROM staging_songs
     """)
 
     artist_table_insert = ("""
-        SELECT distinct artist_id, artist_name, artist_location, artist_latitude, artist_longitude
+        INSERT INTO artists SELECT distinct artist_id, artist_name, artist_location, artist_latitude, artist_longitude
         FROM staging_songs
     """)
 
@@ -40,3 +41,23 @@ class SqlQueries:
                extract(month from start_time), extract(year from start_time), extract(dayofweek from start_time)
         FROM songplays
     """)
+
+    copy_staging_songs=("""
+        COPY {}
+        FROM '{}'
+        ACCESS_KEY_ID '{}'
+        SECRET_ACCESS_KEY '{}'
+        json 'auto';
+    """)
+
+    copy_staging_events=(
+        """
+        COPY {}
+        FROM '{}'
+        ACCESS_KEY_ID '{}'
+        SECRET_ACCESS_KEY '{}'
+        json 'auto';
+        FORMAT AS json {{params.log_path}}\
+        TIMEFORMAT 'epochmillisecs';
+        """
+    )
