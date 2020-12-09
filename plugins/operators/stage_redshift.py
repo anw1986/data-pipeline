@@ -30,8 +30,10 @@ class StageToRedshiftOperator(BaseOperator):
         credentials = aws_hook.get_credentials()
         redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
 
-        self.log.info("Delete records from existing Redshift table")
-        redshift.run(f'TRUNCATE TABLE {self.table};')
+        # delete records only for songs table
+        if self.table=='stage_songs':
+            self.log.info("Delete records from existing Redshift table")
+            redshift.run(f'TRUNCATE TABLE {self.table};')
         
         self.log.info("Copying data from S3 to Redshift")
         rendered_key = self.s3_key.format(**context)

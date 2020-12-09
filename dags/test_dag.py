@@ -12,7 +12,7 @@ from helpers import SqlQueries
 
 default_args = {
     'owner': 'sparkify',
-    'start_date': datetime(2019, 1, 12),
+    'start_date': datetime(2018, 11, 1),
     'depends_on_past':False,
     'retries': 3,
     'retry_delay': timedelta(minutes=5),
@@ -21,9 +21,10 @@ default_args = {
 }
 
 dag = DAG('test_create_table_redshift',
-          default_args=default_args,
-          description='Load and transform data in Redshift with Airflow',
-          schedule_interval='0 * * * *'
+        default_args=default_args,
+        description='Load and transform data in Redshift with Airflow',
+        #   schedule_interval='0 * * * *'
+        schedule_interval=timedelta(days=1)
 )
 
 create_table_employee=PostgresOperator(
@@ -55,7 +56,7 @@ dag_3=DAG(
     'insert_into_redshift',
     default_args=default_args,
     description='Load and transform data in Redshift with Airflow',
-    schedule_interval='0 * * * *'
+    schedule_interval=timedelta(days=1)
 )
 
 start_operator=DummyOperator(task_id='Begin_execution',dag=dag_3)
@@ -84,6 +85,7 @@ load_songs_to_redshift=StageToRedshiftOperator(
 stage_events_to_redshift=StageToRedshiftOperator(
     task_id='staging_events',
     dag=dag_3,
+    end_date=datetime(2018, 11, 30, hour=23),
     table='staging_events',
     redshift_conn_id='redshift',
     aws_credentials_id='aws_credentials',
@@ -93,6 +95,16 @@ stage_events_to_redshift=StageToRedshiftOperator(
     s3_key='log_data/{{macros.ds_format(ds,"%Y-%m-%d","%Y")}}/{{macros.ds_format(ds,"%Y-%m-%d","%m")}}/{{ds}}-events.json'
 )
 
+load_songplays_table = LoadFactOperator(
+    task_id='Load_songplays_fact_table',
+    dag=dag_3,
+    redshift_conn_id='redshift',
+    aws_credentials_id='aws_credentials',
+    table='songplays',
+    sql_query=SqlQueries.songplay_table_insert
+)
+
 end_operator=DummyOperator(task_id='End_execution', dag=dag_3)
 
-start_operator>>create_table_all>>[load_songs_to_redshift,stage_events_to_redshift]>>end_operator
+start_operator>>create_table_all>>[load_songs_to_redshift,stage_events_to_redshift]>>load_songplays_table>>end_operator
+# start_operator>>create_table_all>>stage_events_to_redshift>>end_operator

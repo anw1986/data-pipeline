@@ -56,8 +56,7 @@ class SqlQueries:
         FROM '{}'
         ACCESS_KEY_ID '{}'
         SECRET_ACCESS_KEY '{}'
-        json 'auto';
-        FORMAT AS json {{params.log_path}}\
+        FORMAT AS json '{{params.log_path}}'\
         TIMEFORMAT 'epochmillisecs';
         """
     )
