@@ -30,7 +30,7 @@ class StageToRedshiftOperator(BaseOperator):
         credentials = aws_hook.get_credentials()
         redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
 
-        # delete records only for songs table
+        # delete records only for songs staging table
         if self.table=='stage_songs':
             self.log.info("Delete records from existing Redshift table")
             redshift.run(f'TRUNCATE TABLE {self.table};')
