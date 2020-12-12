@@ -13,6 +13,7 @@ from helpers import SqlQueries
 default_args = {
     'owner': 'sparkify',
     'start_date': datetime(2018, 11, 1),
+    # 'start_date': datetime(2020, 12, 10),
     'depends_on_past':False,
     'retries': 3,
     'retry_delay': timedelta(minutes=5),
@@ -65,6 +66,7 @@ create_table_all=PostgresOperator(
     task_id='redshift_table',
     dag=dag_3,
     postgres_conn_id='redshift',
+    catchup=False,
     sql='sql/create_tables.sql'
 )
 
@@ -93,6 +95,7 @@ stage_events_to_redshift=StageToRedshiftOperator(
     s3_bucket='udacity-dend',
     copy_sql=SqlQueries.copy_staging_events,
     params={'log_path':'s3://udacity-dend/log_json_path.json'},
+    # s3_key='log_data/'
     s3_key='log_data/{{macros.ds_format(ds,"%Y-%m-%d","%Y")}}/{{macros.ds_format(ds,"%Y-%m-%d","%m")}}/{{ds}}-events.json'
 )
 
@@ -109,40 +112,57 @@ load_songplays_table = LoadFactOperator(
 load_song_dimension_table = LoadDimensionOperator(
     task_id='Load_song_dim_table',
     dag=dag_3,
+    table='songs',
+    redshift_conn_id='redshift',
+    aws_credentials_id='aws_credentials',
     truncate_insert=True,
+    catchup=False,
     sql_query=SqlQueries.song_table_insert
 )
 
 load_artist_dimension_table = LoadDimensionOperator(
     task_id='Load_artist_dim_table',
     dag=dag_3,
+    table='artists',
+    redshift_conn_id='redshift',
+    aws_credentials_id='aws_credentials',
     truncate_insert=True,
+    catchup=False,
     sql_query=SqlQueries.artist_table_insert
 )
 
 load_user_dimension_table = LoadDimensionOperator(
     task_id='Load_user_dim_table',
-    dag=dag,
+    dag=dag_3,
+    table='users',
+    redshift_conn_id='redshift',
+    aws_credentials_id='aws_credentials',
     truncate_insert=True,
+    catchup=False,
     sql_query=SqlQueries.user_table_insert
 )
 
 load_time_dimension_table = LoadDimensionOperator(
     task_id='Load_time_dim_table',
-    dag=dag,
+    dag=dag_3,
+    table='time',
+    redshift_conn_id='redshift',
+    aws_credentials_id='aws_credentials',
     truncate_insert=True,
+    catchup=False,
     sql_query=SqlQueries.time_table_insert
 )
 
 run_quality_checks = DataQualityOperator(
     task_id='Run_data_quality_checks',
-    dag=dag,
+    dag=dag_3,
     tables=['songplays','artists','songs','time','users'],
     redshift_conn_id='redshift',
+    catchup=False,
     aws_credentials_id='aws_credentials'
 )
 
 end_operator=DummyOperator(task_id='End_execution', dag=dag_3)
 
-start_operator>>create_table_all>>[load_songs_to_redshift,stage_events_to_redshift]>>load_songplays_table>>end_operator
+start_operator>>create_table_all>>[load_songs_to_redshift,stage_events_to_redshift]>>load_songplays_table>>[load_artist_dimension_table,load_song_dimension_table,load_time_dimension_table,load_user_dimension_table]>>run_quality_checks>>end_operator
 # start_operator>>create_table_all>>stage_events_to_redshift>>end_operator

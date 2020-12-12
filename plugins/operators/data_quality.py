@@ -1,5 +1,5 @@
 import logging
-
+from airflow.contrib.hooks.aws_hook import AwsHook
 from airflow.hooks.postgres_hook import PostgresHook
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
@@ -29,7 +29,7 @@ class DataQualityOperator(BaseOperator):
         for table in self.tables:
             records=redshift.get_records(f'SELECT COUNT(*) FROM {table}')
             if len(records) < 1 or len(records[0]) < 1:
-            raise ValueError(f"Data quality check failed. {table} returned no results")
+             raise ValueError(f"Data quality check failed. {table} returned no results")
             num_records = records[0][0]
             if num_records < 1:
                 raise ValueError(f"Data quality check failed. {table} contained 0 rows")

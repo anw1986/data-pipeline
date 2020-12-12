@@ -31,14 +31,13 @@ class StageToRedshiftOperator(BaseOperator):
         redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
 
         # delete records only for songs staging table
-        if self.table=='stage_songs':
-            self.log.info("Delete records from existing Redshift table")
-            redshift.run(f'TRUNCATE TABLE {self.table};')
+        # if self.table=='stage_songs':
+        self.log.info("Delete records from existing staging table")
+        redshift.run(f'TRUNCATE TABLE {self.table};')
         
         self.log.info("Copying data from S3 to Redshift")
         rendered_key = self.s3_key.format(**context)
         s3_path = f"s3://{self.s3_bucket}/{rendered_key}"
-        
 
         formatted_sql=self.copy_sql.format(
             self.table,
