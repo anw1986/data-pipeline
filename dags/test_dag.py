@@ -66,7 +66,7 @@ create_table_all=PostgresOperator(
     task_id='redshift_table',
     dag=dag_3,
     postgres_conn_id='redshift',
-    catchup=False,
+    # catchup=False,
     sql='sql/create_tables.sql'
 )
 
@@ -78,7 +78,7 @@ load_songs_to_redshift=StageToRedshiftOperator(
     aws_credentials_id='aws_credentials',
     s3_bucket='udacity-dend', 
     copy_sql=SqlQueries.copy_staging_songs,
-    catchup=False,
+    # catchup=False,
     s3_key='song_data/A/'
 )
 # s3://udacity-dend/log_data/2018/11/
@@ -102,7 +102,7 @@ stage_events_to_redshift=StageToRedshiftOperator(
 load_songplays_table = LoadFactOperator(
     task_id='Load_songplays_fact_table',
     dag=dag_3,
-    catchup=False,
+    # catchup=False,
     redshift_conn_id='redshift',
     aws_credentials_id='aws_credentials',
     table='songplays',
@@ -116,7 +116,7 @@ load_song_dimension_table = LoadDimensionOperator(
     redshift_conn_id='redshift',
     aws_credentials_id='aws_credentials',
     truncate_insert=True,
-    catchup=False,
+    # catchup=False,
     sql_query=SqlQueries.song_table_insert
 )
 
@@ -127,7 +127,7 @@ load_artist_dimension_table = LoadDimensionOperator(
     redshift_conn_id='redshift',
     aws_credentials_id='aws_credentials',
     truncate_insert=True,
-    catchup=False,
+    # catchup=False,
     sql_query=SqlQueries.artist_table_insert
 )
 
@@ -138,7 +138,7 @@ load_user_dimension_table = LoadDimensionOperator(
     redshift_conn_id='redshift',
     aws_credentials_id='aws_credentials',
     truncate_insert=True,
-    catchup=False,
+    # catchup=False,
     sql_query=SqlQueries.user_table_insert
 )
 
@@ -149,7 +149,7 @@ load_time_dimension_table = LoadDimensionOperator(
     redshift_conn_id='redshift',
     aws_credentials_id='aws_credentials',
     truncate_insert=True,
-    catchup=False,
+    # catchup=False,
     sql_query=SqlQueries.time_table_insert
 )
 
@@ -158,7 +158,7 @@ run_quality_checks = DataQualityOperator(
     dag=dag_3,
     tables=['songplays','artists','songs','time','users'],
     redshift_conn_id='redshift',
-    catchup=False,
+    # catchup=False,
     aws_credentials_id='aws_credentials'
 )
 

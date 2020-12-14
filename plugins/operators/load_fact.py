@@ -31,14 +31,14 @@ class LoadFactOperator(BaseOperator):
         # get how many records to be insersted in the facts table
         records=redshift.get_records(f'SELECT COUNT(*) FROM ({self.sql_query})')
         if len(records) < 1 or len(records[0])<1 or records[0][0]< 1:
-            raise ValueError("0 rows to be inserted")
+            self.log.info("0 rows to be inserted")
         else:
             self.log.info(f'{records[0][0]} records to be inserted')
 
         # get existing record count in the fact table
         records=redshift.get_records(f'SELECT COUNT(*) FROM {self.table}')
         if len(records) < 1 or len(records[0])<1 or records[0][0]< 1:
-            raise ValueError("no record in the fact table")
+            self.log.info("no record in the fact table")
         else:
             self.log.info(f'{records[0][0]} records are currently in the {self.table}')
         
@@ -47,6 +47,6 @@ class LoadFactOperator(BaseOperator):
         redshift.run(formatted_sql)
         records=redshift.get_records(f'SELECT COUNT(*) FROM {self.table}')
         if len(records) < 1 or len(records[0])<1 or records[0][0]< 1:
-            raise ValueError("no record in the fact table")
+            self.log.info("no record in the fact table")
         else:
             self.log.info(f'{records[0][0]} records are currently in the {self.table}')
