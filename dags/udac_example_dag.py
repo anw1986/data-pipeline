@@ -29,7 +29,7 @@ default_args = {
     'owner': 'sparkify',
     'start_date': datetime(2018, 11, 1),
     'depends_on_past':False,
-    'retries': 3,
+    'retries': 5,
     'retry_delay': timedelta(minutes=2),
     'catchup':False,
     'email_on_rety': False
