@@ -38,18 +38,18 @@ default_args = {
 dag = DAG('airflow_load_data_s3_redshift',
         default_args=default_args,
         description='Load and transform data in Redshift with Airflow',
-        #   schedule_interval='0 * * * *'
-        schedule_interval=timedelta(days=1)
+        schedule_interval='0 * * * *'
+        # schedule_interval=timedelta(days=1)
         )
 
 start_operator = DummyOperator(task_id='Begin_execution',  dag=dag)
 
-create_table_all=PostgresOperator(
-    task_id='redshift_table',
-    dag=dag,
-    postgres_conn_id='redshift',
-    sql='sql/create_tables.sql'
-)
+# create_table_all=PostgresOperator(
+#     task_id='redshift_table',
+#     dag=dag,
+#     postgres_conn_id='redshift',
+#     sql='sql/create_tables.sql'
+# )
 
 # s3://udacity-dend/log_data/2018/11/
 # log_data/2018/11/2018-11-01-events.json
@@ -159,10 +159,17 @@ end_operator = DummyOperator(task_id='Stop_execution',  dag=dag)
 
 # Relations between tasks
 # see the bitshit operations in the documention https://airflow.apache.org/docs/stable/concepts.html?highlight=hook#additional-functionality
-start_operator>>create_table_all
-create_table_all>>stage_songs_to_redshift>>load_songplays_table
-create_table_all>>s3_file>>stage_events_to_redshift>>load_songplays_table
+
+# start_operator>>create_table_all
+start_operator>>stage_songs_to_redshift>>load_songplays_table
+start_operator>>s3_file>>stage_events_to_redshift>>load_songplays_table
 load_songplays_table>>[load_artist_dimension_table,load_song_dimension_table,load_time_dimension_table,load_user_dimension_table]>>run_quality_checks
 run_quality_checks>>end_operator
+
+# start_operator>>create_table_all
+# create_table_all>>stage_songs_to_redshift>>load_songplays_table
+# create_table_all>>s3_file>>stage_events_to_redshift>>load_songplays_table
+# load_songplays_table>>[load_artist_dimension_table,load_song_dimension_table,load_time_dimension_table,load_user_dimension_table]>>run_quality_checks
+# run_quality_checks>>end_operator
 
 
