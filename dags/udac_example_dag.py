@@ -32,7 +32,7 @@ default_args = {
     'retries': 5,
     'retry_delay': timedelta(minutes=2),
     'catchup':False,
-    'email_on_rety': False
+    'email_on_retry': False
 }
 
 dag = DAG('airflow_load_data_s3_redshift',
